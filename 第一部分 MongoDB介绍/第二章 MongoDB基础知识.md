@@ -107,3 +107,65 @@ ObjectId的12字节按照如下方式生成：
 **2.自动生成_id**
 
 如果插入文档时没有“_id”键，系统会自动创建一个。通过这件事不是由MongoDB服务器来做，而是在客户端由驱动程序完成。这一做法非常好地体现了MongoDB的哲学：能交给客户端驱动程序来做的事情就不要交给服务器来做。这种理念背后的原因时，即便是像MongoDB这样扩展性非常好的数据库，扩展应用层也要比扩展数据库层容易得多。将工作交由客户端来处理，就减轻了数据库扩展的负担。
+
+
+## 2.7 使用MongoDB shell
+只要计算机能够连通MongoDB实例所在的计算机，shell就可以连接。在启动shell时指定机器名和端口，就可以连接到一台不同的机器（或者端口）。
+
+启动mongo shell时不连接任何mongod有时很方便。通过--nodb参数启动shell，启动时就不会连接任何数据库。
+
+启动之后，在需要时运行new Mongo(hostname)命令就可以连接到想要的mongod了。
+
+
+### 2.7.1 shell小贴士
+由于mongo时一个简化的JavaScript shell，可以通过查看JavaScript的在线文档得到大量帮助。对于MongoDB特有的功能，shell内置了帮助文档，可以使用help命令查看：
+
+```
+> help
+        db.help()                    help on db methods
+        db.mycoll.help()             help on collection methods
+        sh.help()                    sharding helpers
+        rs.help()                    replica set helpers
+        help admin                   administrative help
+        help connect                 connecting to a db help
+        help keys                    key shortcuts
+        help misc                    misc things to know
+        help mr                      mapreduce
+
+        show dbs                     show database names
+        show collections             show collections in current database
+        show users                   show users in current database
+        show profile                 show most recent system.profile entries with time >= 1ms
+        show logs                    show the accessible logger names
+        show log [name]              prints out the last segment of log in memory, 'global' is default
+        use <db_name>                set current database
+        db.foo.find()                list objects in collection foo
+        db.foo.find( { a : 1 } )     list objects in foo where a == 1
+        it                           result of the last line evaluated; use to further iterate
+        DBQuery.shellBatchSize = x   set default number of items to display on shell
+        exit                         quit the mongo shell
+>
+```
+
+可以通过db.help()查看数据库级别的帮助，使用db.foo.help()查看集合级别的帮助。
+
+如果想知道一个函数是做什么用的，可以直接在shell输入函数名（函数名后不要输入小括号），这样就可以看到相应函数的JavaScript实现代码。
+
+```
+> db.foo.save
+function(obj, opts) {
+    if (obj == null)
+        throw Error("can't save a null");
+
+    if (typeof (obj) == "number" || typeof (obj) == "string")
+        throw Error("can't save a number or string");
+
+    if (typeof (obj._id) == "undefined") {
+        obj._id = new ObjectId();
+        return this.insert(obj, opts);
+    } else {
+        return this.update({_id: obj._id}, obj, Object.merge({upsert: true}, opts));
+    }
+}
+>
+```
